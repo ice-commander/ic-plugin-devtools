@@ -1,7 +1,7 @@
 pub mod search;
 pub mod tools;
 
-pub use tools::{base64 as base64_tool, hash, json};
+pub use tools::{base64 as base64_tool, escape, hash, json};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Group {
@@ -100,6 +100,20 @@ pub const TOOLS: &[ToolSpec] = &[
         takes_file: false,
     },
     ToolSpec {
+        id: "encoding.escape",
+        group: Group::Encoding,
+        shape: Shape::Document,
+        keywords: &["escape", "backslash", "string", "literal"],
+        takes_file: true,
+    },
+    ToolSpec {
+        id: "encoding.unescape",
+        group: Group::Encoding,
+        shape: Shape::Document,
+        keywords: &["unescape", "backslash", "string", "literal"],
+        takes_file: false,
+    },
+    ToolSpec {
         id: "format.json_pretty",
         group: Group::Format,
         shape: Shape::Document,
@@ -158,7 +172,11 @@ mod tests {
 
     #[test]
     fn decoding_takes_pasted_text_rather_than_a_file() {
-        for id in ["encoding.base64_decode", "encoding.hex_decode"] {
+        for id in [
+            "encoding.base64_decode",
+            "encoding.hex_decode",
+            "encoding.unescape",
+        ] {
             assert!(!spec(id).unwrap().takes_file, "{id}");
         }
         assert!(spec("encoding.base64_encode").unwrap().takes_file);

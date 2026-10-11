@@ -58,6 +58,46 @@ fn tool_options() -> Vec<Value> {
         .collect()
 }
 
+/// The tool picked: what goes in, what comes out, and for a checksum what to compare it with.
+fn tool_area() -> Value {
+    json!({ "t": "column", "id": "work", "spacing": 8, "weight": 1, "children": [
+        { "t": "text", "id": "input_label", "role": "dim",
+          "text": { "tr": "devtools.input", "en": "Input" } },
+        { "t": "input", "id": "input", "bind": "input", "variant": "multiline",
+          "height": 120, "weight": 1, "emit": "change", "debounce_ms": 120 },
+
+        { "t": "row", "id": "controls", "spacing": 8, "children": [
+            { "t": "text", "id": "size", "role": "dim", "weight": 1,
+              "text": "{data.size}" },
+            { "t": "button", "id": "copy", "role": "flat",
+              "label": { "tr": "devtools.copy", "en": "Copy" },
+              "intent": { "do": "emit", "node": "copy" } } ] },
+
+        { "t": "text", "id": "output_label", "role": "dim",
+          "text": { "tr": "devtools.output", "en": "Result" } },
+        { "t": "input", "id": "output", "bind": "output", "variant": "multiline",
+          "height": 120, "weight": 1, "read_only": true },
+
+        { "t": "column", "id": "compare", "spacing": 8, "margin_top": 4,
+          "visible": { "one_of": { "value": "state.tool", "of": hash_ids() } },
+          "children": [
+            { "t": "text", "id": "expected_label", "role": "dim",
+              "text": { "tr": "devtools.expected", "en": "Compare with" } },
+            { "t": "input", "id": "expected", "bind": "expected", "chrome": "bare",
+              "emit": "change", "debounce_ms": 120,
+              "placeholder": { "tr": "devtools.expected_placeholder",
+                               "en": "paste a checksum to compare" } } ] },
+
+        { "t": "text", "id": "status",
+          "role": { "cases": [
+              { "when": { "truthy": "data.failed" }, "then": "error" } ],
+            "else": "dim" },
+          "text": "{data.status}" }
+    ] })
+}
+
+/// Every tool in a list on the left, the one picked filling the rest; the two text areas share the room the window
+/// is given. An application from before `"chrome": "list"` draws the list as a drop-down in the same place.
 pub fn document() -> Value {
     json!({
         "schema": 1,
@@ -71,49 +111,18 @@ pub fn document() -> Value {
             "t": "view",
             "surface": "dialog",
             "scroll": "vertical",
-            "spacing": 12,
-            "padding": 24,
-            "width": 860,
-            "height": 660,
+            "padding": 16,
+            "width": 900,
+            "height": 600,
             "children": [
-                { "t": "group", "id": "picker", "children": [
-                    { "t": "choice", "id": "tool", "bind": "tool", "chrome": "row",
+                { "t": "row", "id": "layout", "spacing": 16, "weight": 1, "children": [
+                    { "t": "choice", "id": "tool", "bind": "tool", "chrome": "list", "width": 200,
                       "title": { "tr": "devtools.toolbar_tooltip", "en": "Developer Toolbox" },
                       "options": tool_options(),
-                      "decode": { "case_insensitive": true, "unknown": TOOLS[0].id } } ] },
+                      "decode": { "case_insensitive": true, "unknown": TOOLS[0].id } },
 
-                { "t": "text", "id": "input_label", "role": "dim", "margin_top": 12,
-                  "text": { "tr": "devtools.input", "en": "Input" } },
-                { "t": "input", "id": "input", "bind": "input", "variant": "multiline",
-                  "height": 150, "emit": "change", "debounce_ms": 120 },
-
-                { "t": "row", "id": "controls", "spacing": 8, "children": [
-                    { "t": "text", "id": "size", "role": "dim", "weight": 1,
-                      "text": "{data.size}" },
-                    { "t": "button", "id": "copy", "role": "flat",
-                      "label": { "tr": "devtools.copy", "en": "Copy" },
-                      "intent": { "do": "emit", "node": "copy" } } ] },
-
-                { "t": "text", "id": "output_label", "role": "dim",
-                  "text": { "tr": "devtools.output", "en": "Result" } },
-                { "t": "input", "id": "output", "bind": "output", "variant": "multiline",
-                  "height": 150, "read_only": true },
-
-                { "t": "column", "id": "compare", "spacing": 8, "margin_top": 12,
-                  "visible": { "one_of": { "value": "state.tool", "of": hash_ids() } },
-                  "children": [
-                    { "t": "text", "id": "expected_label", "role": "dim",
-                      "text": { "tr": "devtools.expected", "en": "Compare with" } },
-                    { "t": "input", "id": "expected", "bind": "expected", "chrome": "bare",
-                      "emit": "change", "debounce_ms": 120,
-                      "placeholder": { "tr": "devtools.expected_placeholder",
-                                       "en": "paste a checksum to compare" } } ] },
-
-                { "t": "text", "id": "status", "margin_top": 12,
-                  "role": { "cases": [
-                      { "when": { "truthy": "data.failed" }, "then": "error" } ],
-                    "else": "dim" },
-                  "text": "{data.status}" }
+                    tool_area()
+                ] }
             ]
         }
     })

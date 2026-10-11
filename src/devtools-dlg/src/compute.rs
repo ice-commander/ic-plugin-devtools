@@ -1,4 +1,4 @@
-use devtools_core::{base64_tool, hash, json, Group, ToolSpec, TOOLS};
+use devtools_core::{base64_tool, escape, hash, json, Group, ToolSpec, TOOLS};
 
 pub fn spec_of(id: &str) -> &'static ToolSpec {
     TOOLS.iter().find(|spec| spec.id == id).unwrap_or(&TOOLS[0])
@@ -23,6 +23,8 @@ pub fn run(id: &str, bytes: &[u8]) -> Result<String, String> {
             "encoding.hex_encode" => Ok(base64_tool::to_hex(bytes)),
             "encoding.base64_decode" => as_text(base64_tool::decode(&text())?),
             "encoding.hex_decode" => as_text(base64_tool::from_hex(&text())?),
+            "encoding.escape" => Ok(escape::escape(&text())),
+            "encoding.unescape" => escape::unescape(&text()),
             other => Err(format!("unknown encoder {other}")),
         },
         Group::Format => match spec.id {
@@ -53,6 +55,7 @@ mod tests {
         match id {
             "encoding.base64_decode" => b"YWJj",
             "encoding.hex_decode" => b"616263",
+            "encoding.unescape" => br"a\tb",
             "format.json_pretty" | "format.json_minify" => br#"{"a":1}"#,
             _ => b"abc",
         }
@@ -83,6 +86,11 @@ mod tests {
         );
         assert_eq!(run("encoding.base64_encode", b"abc").expect("b64"), "YWJj");
         assert_eq!(run("encoding.hex_encode", b"abc").expect("hex"), "616263");
+        assert_eq!(run("encoding.escape", b"a\tb").expect("escape"), "a\\tb");
+        assert_eq!(
+            run("encoding.unescape", br"a\tb").expect("unescape"),
+            "a\tb"
+        );
     }
 
     #[test]
