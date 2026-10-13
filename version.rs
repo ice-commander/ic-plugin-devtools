@@ -2,6 +2,6 @@
 // A macro, not a const: declare_about! feeds it to concat!, which takes only literals.
 macro_rules! plugins_version {
     () => {
-        "0.1.1"
+        "0.1.2"
     };
 }
